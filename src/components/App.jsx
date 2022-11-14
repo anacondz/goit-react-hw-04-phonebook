@@ -3,62 +3,42 @@ import { Form } from './Form/Form';
 import { Contacts } from './Contacts/Contacts';
 import { Filter } from './Filters/Filters';
 import css from './App.module.css';
+import { useLocalStorage } from './LocalStorage';
+import { useState } from 'react'; 
 
-export class App extends React.Component {
-  state = {
-    contacts: [],
-    filter: '',
-  }
+export const App = () => {
+  const [contacts, setContacts] = useLocalStorage('contacts', []);
+  const [filter, setFilter] = useState('');
 
-  componentDidMount = () => {
-    const storage = localStorage.getItem('contacts');
-    const parsedStorage = JSON.parse(storage);
-    if (parsedStorage) {
-      this.setState({ contacts : parsedStorage})
-    }
-   };
-
-  componentDidUpdate = (prevProps, prevState) => {
-    const updatedState = this.state.contacts;
-    if (updatedState !== prevState.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(updatedState));
-    }
-   }
-
-  addContacts = newContact => {
-    const contacts = this.state.contacts;
-    contacts.find(contact => contact.name === newContact.name)
+  const addContacts = newContact => {
+    contacts.find(prev => prev.name === newContact.name)
       ? alert(`${newContact.name} is already in contacts`) :
-      this.setState(prevState => ({
-        contacts: [...prevState.contacts, newContact],
-      }));
+      setContacts(prev => [...prev, newContact])
+      };
+  
+  const filterContact = evt => {
+    const { value } = evt.currentTarget;
+    setFilter( value );
   }
-    filterContact = evt => {
-      const { value } = evt.currentTarget;
-      this.setState({ filter: value });
-    }
 
-    deleteContact = id => {
-      const wrong = contact => contact.id !== id;
-      const success = this.state.contacts.filter(wrong);
-      this.setState({ contacts: success });
-    };
+  const deleteContact = id => {
+    const wrong = prev => prev.id !== id;
+    const updatedLi = contacts.filter(wrong)
+    setContacts(updatedLi)
+  };
 
-    render() {
-      const { contacts, filter } = this.state;
-      const { addContacts, filterContact, deleteContact } = this;
-      return (
-        <div className={css.form__wrapper}>
-          <h2 className={css.form__title}>Phonebook</h2>
-          <Form addContacts={addContacts} contacts={contacts} />
-          <h2 className={css.form__title}>Contacts</h2>
-          <Filter filteredContent={filter} filterContact={filterContact} />
-          <Contacts
-            contacts={contacts}
-            filteredContent={filter}
-            deleteContact={deleteContact}
-          />
-        </div>
-      );
-    }
+  
+  return (
+    <div className={css.form__wrapper}>
+      <h2 className={css.form__title}>Phonebook</h2>
+      <Form addContacts={addContacts} contacts={contacts} />
+      <h2 className={css.form__title}>Contacts</h2>
+      <Filter filteredContent={filter} filterContact={filterContact} />
+      <Contacts
+        contacts={contacts}
+        filteredContent={filter}
+        deleteContact={deleteContact}
+      />
+    </div>
+  );
   }
